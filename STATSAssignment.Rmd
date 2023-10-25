@@ -1,0 +1,287 @@
+---
+title: "Final, assignment"
+author: "Ainsley Godfrey"
+output:
+  pdf_document:
+    latex_engine: xelatex 
+date: "2023-10-25"
+---
+# Question 1
+
+
+**_a)Produce a plot and a correlation matrix of the data_**
+
+
+Speed Performance Index (SPI) with transport has a strong negative linear relationship.
+
+
+SPI with road, has a weak negative linear relationship.
+
+
+SPI with Weather shows as a strong positive linear relationship 
+
+
+Whilst the relationships between SPI and fuel, as well as SPI and Wind have no obvious relationships.  
+
+
+```{r echo=FALSE}
+traffic <- read.csv("traffic.csv", header=TRUE)
+pairs(traffic, panel=panel.smooth)
+```
+
+```{r}
+correlation_matrix <- cor(traffic)
+print(correlation_matrix)
+```
+
+**_b)Fit a model and estimate the impact of weather on Spi_**
+
+
+
+
+
+```{r,}
+model <- lm(spi ~ transport + road + weather + fuel + wind, traffic)
+summary(model)
+model_summary <- summary(model)
+
+```
+The required CI: 
+$$
+\beta_{weather}\pm\ t_{n-p, 1 - alpha}\ 2^{s.e.}\beta_{weather}
+$$
+$$
+=4.2456\pm\ 3.349648\times5.141639 
+$$
+$$
+= -12.97708, 21.46828 
+$$
+
+Therefore, we can say we are 95% confident that for every Spi the range will be
+between -12.97708, and 21.46928--
+
+
+
+**_c) conduct an F-test for the overall regression_**
+
+
+Mathematical regression; 
+
+$$
+Y_i=\beta_0\times\beta_1X_{i1}+\beta_2X_{i2}+\beta_3X_{i3}+\beta_4X_{i4}+\beta_5X_{i5}+e_i,  i=1,2,..n
+$$
+$$
+Y_i=\beta_0\times\beta_1transport+\beta_2road+\beta_3weather+\beta_4fuel+\beta_5wind+e_i,  i=1,2,..n
+$$
+$$
+H_0 =\beta_1=\beta_2=\beta_3=\beta_4=\beta_5=0
+$$
+$$
+H_A =not\ all\ means\ are\ the\ same
+$$
+$$
+Test Statistic: Fobs = Reg.M.S./ Res.M.S.
+$$
+$$
+$$
+
+
+
+```{r}
+anova_table <- anova(model)
+summary(anova_table)
+f_statistic <- anova_table$"F value"[1]
+summary(f_statistic)
+p_value<- 1-pf(f_statistic, 5, 56)
+summary(p_value)
+```
+$$
+The\ null\ distribution\ of\ the\ test\ statistics\ is\ F_{5,56}
+$$
+
+
+
+
+**d)Validate the full model and comment on whether the full regression model is appropriate to explain the spi.**.   
+
+
+```{r}
+par(mfrow = c(3, 2))
+plot(model, which = 1:2)
+plot(resid(model) ~ transport, data = traffic, xlab = "transport", ylab="residuals")
+plot(resid(model) ~ weather, data = traffic, xlab = "weather", ylab="residuals")
+plot(resid(model) ~ road, data = traffic, xlab = "road", ylab="residuals")
+plot(resid(model) ~ fuel, data = traffic, xlab = "fuel", ylab="residuals")
+plot(resid(model) ~ wind, data = traffic, xlab = "wind", ylab="residuals")
+```
+
+
+The quantile plot of the residuals appears to be in a positive linear relationship, meaning the assumptions for the residuals is appropriately normal. As the residual graphs have limited pattern, it demonstrates that the assumption for variance and consistency is justified with this model.  
+
+
+
+```{r}
+model <- aov(spi ~ weather + transport + fuel + road + wind, data = traffic)
+anova_result <- anova(model)
+print(anova_result)
+```
+
+
+The full model is not appropriate as the variable wind has a p value of 0.4449 which is greater then 0.05 (or 5% significance level). meaning this full model is inappropriate to use as the description of spi between this other conditions.  
+
+
+
+**e)Find the R2 and comment on what it means in the context of this dataset.**
+
+```{r}
+r_squared <- summary(model)$r.squared
+cat("R-squared (R^2):", r_squared, "\n")
+```
+
+
+This data says that, R2 = 0.7405181 = 74%, meaning that the regression model is able to describe 74% of the data. 
+
+
+
+**f) The best fitting model**
+
+
+As now the best model shows all of the predictors to be statsticlly signficant, all reamining models should be kept within the model. Meaning the remaining predicotrs are: trasnport, road and weather 
+
+
+
+```{r}
+summary (model)
+model2 <- update(model, .~.-wind)
+summary(model2)
+model3 <- update(model2, .~.- fuel)
+summary(model3)
+```
+**_g)Comment on the R2 and adjusted R2 in the full and final model you chose in part f_**
+
+The model chosen in part f was all inclusive of the predictors, transport, road and weather. However, the R2 value changes from 0.745 to 0.7256. This means that the overall R2 value reduces by 0.0194. The reduction in R^2 value, can be associated with the removal of predictors that had less effect on the model then what was thought. 
+
+
+
+
+# Question 2
+
+
+
+**_a)_ The experiment is balanced, as equal number of observations for each of the following conditions._**
+
+
+```{r}
+cake <-read.csv("cake.csv")
+table(cake[, c("Recipe", "Temp")])
+```
+
+**_b) Construct two prelimanry graphs_** 
+
+
+
+
+```{r}
+boxplot(Angle ~ Temp, data = cake,
+        main = "Box Plot of Angle by Temperature",
+        xlab = "Temperature (°C)",
+        ylab = "Angle",
+        col = "lightblue", border = "blue")
+par(mfrow = c(1, 2))
+with(cake, interaction.plot(Temp, Recipe, Angle)) 
+with(cake, interaction.plot(Recipe, Temp, Angle))
+```
+
+
+Based off of the boxplot, the similar sized boxes, allow an assumption of equal variance to exist. 
+
+
+Meanwhile, the interaction graphs, do not appear tocontain parallel lines, meaning there may be a clear interaction between the data. 
+
+
+
+**_c)_Write down the full interaction model for this situation_**
+
+$$
+Y=\beta_0+\beta_1\times\ temp+\beta_2\times\ recipe+\beta_3\times(Temp\times\ Recipe) + e
+$$
+$$
+Y: Angle
+$$
+$$
+\beta_0: interaction\ between\ temperature\ and\ recipe
+$$
+$$
+\beta_1: represents\ temperature,\ with\ a\ range\ of\ 17.5-22.5^{C}
+$$
+$$
+\beta_2: represents\ the\ effect\ of\ Recipe\ with\ three\ levels\ A,\ B,\ C 
+$$
+
+$$
+\beta_3: represents\ the\ interaction\ of\ Recipe\ with\ Temp\
+$$
+
+e: the error that could exist within the Angle variable.   
+
+
+
+
+**_d)Analyse the data to study the effect of Temp and Recipe on breaking Angle of cake at 5% significance level_**
+
+
+- Null Hypothesis (H0): There is no significant difference in the mean breaking angle of the cake among different levels of "Temp" and "Recipe," and there is no interaction effect  
+
+
+- Alternative Hypothesis (H1): There is a significant difference in the mean breaking angle of the cake among different levels of "Temp" and "Recipe," and there is an interaction effect.  
+
+
+- As the p value is less then 0.05, for both temeprautre and recipe, meaning that there is significant difference with regards to the mean angle of the cakes. However, a greater p value for the interaction of temperature and Recipe, suggest that there is no significant interaction between the factors.
+
+
+```{r}
+qqnorm(cake$Angle)
+hist(cake$Angle)
+par(mfrow = c(1, 2)) 
+plot(model, which = 1:2)
+```
+
+
+Based on the graphs, the Normal distribution within the QQ-Plot, and curvature of the histogram are valid to make the assumption of data normality. The fitted values show somewhat equal distribution meaning, the constant variable assumption is also valid. 
+
+
+```{r}
+model <- aov(Angle ~ Recipe * Temp, data = cake)
+summary(model)
+```
+
+
+The results show that Temp has a P value of: 0.000177 meaning it is statistically significant, likwise, recipe has a p-value of 0.014998 which is similar below the 5% significant level. However, the interactions of the two data have a p value of 0.775632 which is greater then the 5% signifcance level.
+
+
+**_e)analysis for the main effects_**
+```{r}
+cake_temp_175C <- subset(cake, Temp == "175C")
+cake_temp_185C <- subset(cake, Temp == "185C")
+cake_temp_195C <- subset(cake, Temp == "195C")
+cake_temp_205C <- subset(cake, Temp == "205C")
+cake_temp_215C <- subset(cake, Temp == "215C")
+cake_temp_225C <- subset(cake, Temp == "225C")
+anova_temp <- aov(Angle ~ Temp, data = cake)
+summary(anova_temp)
+anova_recipe <- aov(Angle ~ Recipe, data = cake)
+summary(anova_recipe)
+```
+
+
+**_f)Conclusions on the effect of Temp on Recipe on the Angle Response_**
+
+
+The one-way ANOVA test for "Temperature" yielded a significant p-value, indicating that there is a significant main effect of temperature on the breaking angle of the cake. This suggests that different temperature levels have an impact on the breaking angle.
+
+
+The one-way ANOVA test for "Recipe" also yielded a significant p-value, implying that there is a significant main effect of the recipe on the breaking angle of the cake. This indicates that different recipes have a discernible impact on the breaking angle.
+
+
+In summary, both "Temperature" and "Recipe" have been found to have significant main effects on the breaking angle. This means that variations in temperature and recipe choices can influence the quality of the chocolate cake. However, these conclusions are qualitative and do not delve into specific details of how each level of "Temperature" or "Recipe" affects the breaking angle. 
+
